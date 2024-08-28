@@ -1,3 +1,6 @@
+import net.minecraftforge.gradle.common.tasks.SignJar
+import org.apache.commons.io.FilenameUtils
+
 plugins {
     id 'idea'
     id 'maven-publish'
@@ -5,11 +8,13 @@ plugins {
     id 'org.spongepowered.mixin'
 }
 
-archivesBaseName = "${mod_id}-forge"
-version = "${minecraft_version}-${mod_version}"
+base {
+    archivesName = "${mod_id}-forge"
+}
 
 minecraft {
     mappings channel: 'official', version: minecraft_version
+    copyIdeResources = true
 
     if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
         accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
@@ -26,7 +31,6 @@ minecraft {
             mods {
                 modClientRun {
                     source sourceSets.main
-                    source sourceSets.test
                     source project(":common").sourceSets.main
                 }
             }
@@ -42,7 +46,6 @@ minecraft {
             mods {
                 modServerRun {
                     source sourceSets.main
-                    source sourceSets.test
                     source project(":common").sourceSets.main
                 }
             }
@@ -75,21 +78,15 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     implementation fg.deobf("com.mrcrayfish:framework-forge:${minecraft_version}-${framework_version}")
     compileOnly project(":common")
-    testCompileOnly project(":common")
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
 }
 
-tasks.withType(JavaCompile).configureEach {
+Spec<Task> notForge = { Task it -> !it.name.startsWith("forge") && !it.name.contains("Test") } as Spec<Task>
+
+tasks.withType(JavaCompile).matching(notForge).configureEach {
     source(project(":common").sourceSets.main.allSource)
 }
-tasks.withType(Javadoc).configureEach {
-    source(project(":common").sourceSets.main.allJava)
-}
-tasks.named("sourcesJar", Jar) {
-    from(project(":common").sourceSets.main.allSource)
-}
-
-processResources {
+tasks.withType(ProcessResources).matching(notForge).configureEach {
     from project(":common").sourceSets.main.resources
 }
 
@@ -145,14 +142,17 @@ signing {
     sign publishing.publications.mavenJava
 }
 
-task signJar(type: net.minecraftforge.gradle.common.tasks.SignJar, dependsOn: jar) {
+tasks.register('signJar', SignJar) {
+    dependsOn jar
     onlyIf {
-        hasProperty('keyStore') || System.getenv("KEYSTORE")
+        project.hasProperty('keyStore') || System.getenv("KEYSTORE")
     }
     keyStore = findProperty('keyStore') ?: System.getenv("KEYSTORE")
     alias = findProperty('keyStoreAlias') ?: System.getenv("KEYSTORE_ALIAS")
     storePass = findProperty('keyStorePass') ?: System.getenv("KEYSTORE_PASS")
-    inputFile = outputFile = jar.archiveFile
+    inputFile = jar.archiveFile
+    def name = FilenameUtils.removeExtension(jar.archiveFile.get().getAsFile().getName());
+    outputFile = layout.buildDirectory.file("libs/%s-signed.jar".formatted(name));
 }
 
 jar.finalizedBy 'signJar'

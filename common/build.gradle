@@ -5,8 +5,9 @@ plugins {
     id 'org.spongepowered.gradle.vanilla'
 }
 
-archivesBaseName = "${mod_id}-common"
-version = "${minecraft_version}-${mod_version}"
+base {
+    archivesName = "${mod_id}-common"
+}
 
 minecraft {
     version(minecraft_version)
@@ -21,7 +22,6 @@ configurations {
 
 dependencies {
     compileOnly "org.spongepowered:mixin:0.8.5"
-    implementation "com.google.code.findbugs:jsr305:3.0.2"
     compileOnly "com.mrcrayfish:framework-common:${minecraft_version}-${framework_version}"
 }
 

@@ -5,16 +5,8 @@ plugins {
     id 'fabric-loom'
 }
 
-archivesBaseName = "${mod_id}-fabric"
-version = "${minecraft_version}-${mod_version}"
-
-sourceSets {
-    testMod {
-        compileClasspath += main.compileClasspath
-        runtimeClasspath += main.runtimeClasspath
-        compileClasspath += test.compileClasspath
-        runtimeClasspath += test.runtimeClasspath
-    }
+base {
+    archivesName = "${mod_id}-fabric"
 }
 
 configurations {
@@ -27,10 +19,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     modImplementation "com.mrcrayfish:framework-fabric:${minecraft_version}-${framework_version}"
-    implementation "com.google.code.findbugs:jsr305:3.0.2"
     implementation project(":common")
-    testModImplementation sourceSets.main.output
-    testModImplementation sourceSets.test.output
 }
 
 loom {
@@ -45,11 +34,6 @@ loom {
             ideConfigGenerated(true)
             runDir("run")
         }
-        testModClient {
-            inherit client
-            setConfigName("Fabric Test Client")
-            setSource(sourceSets.testMod)
-        }
         server {
             server()
             setConfigName("Fabric Server")
@@ -58,6 +42,8 @@ loom {
         }
     }
 }
+
+sourceSets.main.resources.srcDir 'src/generated/resources'
 
 tasks.withType(JavaCompile).configureEach {
     source(project(":common").sourceSets.main.allSource)
