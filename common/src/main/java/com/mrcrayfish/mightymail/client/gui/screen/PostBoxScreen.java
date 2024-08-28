@@ -1,6 +1,7 @@
 package com.mrcrayfish.mightymail.client.gui.screen;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mrcrayfish.mightymail.client.gui.widget.IconButton;
 import com.mrcrayfish.mightymail.client.util.ScreenHelper;
 import com.mrcrayfish.mightymail.inventory.PostBoxMenu;
@@ -225,6 +226,7 @@ public class PostBoxScreen extends AbstractContainerScreen<PostBoxMenu>
             int responseToastWidth = 4 + contentWidth + 3;
             int responseToastLeft = this.leftPos + this.imageWidth / 2 - responseToastWidth / 2;
             int responseToastTop = this.topPos - 22;
+            PoseStack poseStack = graphics.pose();
             poseStack.pushPose();
             if(this.responseTimer < 5)
             {
@@ -237,14 +239,13 @@ public class PostBoxScreen extends AbstractContainerScreen<PostBoxMenu>
                 float offset = 5 - (MAX_RESPONSE_DISPLAY_TIME - (this.responseTimer + frameTime));
                 poseStack.translate(0, offset * 5, 0);
             }
-            GuiComponent.enableScissor(responseToastLeft, this.topPos - 22, responseToastLeft + responseToastWidth, this.topPos);
-            RenderSystem.setShaderTexture(0, POST_BOX_TEXTURE);
+            graphics.enableScissor(responseToastLeft, this.topPos - 22, responseToastLeft + responseToastWidth, this.topPos);
             int toastU = this.responseSuccess ? 8 : 0;
-            GuiComponent.blit(poseStack, responseToastLeft, responseToastTop, toastU, 200, 4, 18, 512, 256);
-            GuiComponent.blit(poseStack, responseToastLeft + 4, responseToastTop, contentWidth, 18, toastU + 4, 200, 1, 18, 512, 256);
-            GuiComponent.blit(poseStack, responseToastLeft + 4 + contentWidth, responseToastTop, toastU + 5, 200, 3, 18, 512, 256);
-            this.font.draw(poseStack, responseMessage, responseToastLeft + 6, responseToastTop + 5, 0xFFFFFFFF);
-            GuiComponent.disableScissor();
+            graphics.blit(POST_BOX_TEXTURE, responseToastLeft, responseToastTop, toastU, 200, 4, 18, 512, 256);
+            graphics.blit(POST_BOX_TEXTURE, responseToastLeft + 4, responseToastTop, contentWidth, 18, toastU + 4, 200, 1, 18, 512, 256);
+            graphics.blit(POST_BOX_TEXTURE, responseToastLeft + 4 + contentWidth, responseToastTop, toastU + 5, 200, 3, 18, 512, 256);
+            graphics.drawString(this.font, responseMessage, responseToastLeft + 6, responseToastTop + 5, 0xFFFFFFFF, false);
+            graphics.disableScissor();
             poseStack.popPose();
         }
 
@@ -442,7 +443,7 @@ public class PostBoxScreen extends AbstractContainerScreen<PostBoxMenu>
      * Shows a response message if received one from the server. This is called when a mail queue is
      * full or the selected mailbox is in an undeliverable dimension.
      *
-     * @param translationKey the translation key of the message
+     * @param result the translation key of the message
      */
     public void showResponse(DeliveryResult result)
     {
